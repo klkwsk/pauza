@@ -1,0 +1,45 @@
+"use client";
+
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { EntryForm } from "@/components/entry-form";
+import { EntryNotFound } from "@/components/entry-not-found";
+import { useEntry } from "@/hooks/use-entries";
+
+export default function EditEntryPage() {
+  const { id } = useParams<{ id: string }>();
+  const { entry, loading } = useEntry(id);
+
+  if (loading) {
+    return (
+      <p className="py-16 text-center text-sm text-muted-foreground">Ładowanie…</p>
+    );
+  }
+
+  if (!entry) {
+    return <EntryNotFound />;
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <Button
+          variant="ghost"
+          className="-ml-2 h-9"
+          render={<Link href="/" />}
+          nativeButton={false}
+        >
+          <ArrowLeft />
+          Wszystkie wpisy
+        </Button>
+        <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight">
+          Edytuj wpis
+        </h1>
+      </div>
+      <EntryForm entry={entry} />
+    </div>
+  );
+}
