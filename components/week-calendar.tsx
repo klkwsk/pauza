@@ -15,7 +15,7 @@ interface WeekCalendarProps {
 }
 
 export function WeekCalendar({ entries, selectedDate, onSelect }: WeekCalendarProps) {
-  const todayRef = useRef<HTMLDivElement>(null);
+  const todayRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [monthLabel, setMonthLabel] = useState("");
 
