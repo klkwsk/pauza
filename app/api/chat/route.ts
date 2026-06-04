@@ -1,40 +1,17 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import {
-  query,
-  tool,
-  createSdkMcpServer,
-} from "@anthropic-ai/claude-agent-sdk";
+import Anthropic from "@anthropic-ai/sdk";
 
 import { createClient } from "@/lib/supabase/server";
 import { buildFreudSystemPrompt, type ChatMode } from "@/lib/ai/freud-prompt";
 
-// Agent SDK uruchamia podproces CLI — wymaga środowiska Node, nie Edge.
+// Zwykłe wywołanie HTTP do Anthropic — działa na Vercel serverless.
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-haiku-4-5";
+const MAX_TOKENS = 800;
 
-// Czyste env dla podprocesu Agent SDK: wymusza autoryzację przez ANTHROPIC_API_KEY,
-// usuwając zmienne, które mogłyby przekierować na logowanie OAuth / inny endpoint.
-// Na zwykłej maszynie tych zmiennych nie ma — wtedy to po prostu kopia process.env.
-function agentEnv(): Record<string, string> {
-  const env: Record<string, string> = {};
-  for (const [k, v] of Object.entries(process.env)) {
-    if (typeof v !== "string") continue;
-    if (
-      k === "ANTHROPIC_AUTH_TOKEN" ||
-      k === "ANTHROPIC_BASE_URL" ||
-      k === "ANTHROPIC_CUSTOM_HEADERS" ||
-      k === "CLAUDECODE" ||
-      k.startsWith("CLAUDE_CODE_")
-    ) {
-      continue;
-    }
-    env[k] = v;
-  }
-  return env;
-}
+const anthropic = new Anthropic(); // czyta ANTHROPIC_API_KEY z env
 
 type Role = "user" | "assistant";
 interface HistoryMsg {
@@ -76,20 +53,13 @@ function formatEntries(rows: EntryRow[]): string {
   return rows
     .map((e) => {
       const mood =
-        e.mood != null ? `nastrój: ${e.mood}/5 (${MOOD_LABEL[e.mood] ?? "?"})` : "nastrój: brak";
+        e.mood != null
+          ? `nastrój: ${e.mood}/5 (${MOOD_LABEL[e.mood] ?? "?"})`
+          : "nastrój: brak";
       const title = e.title ? `\nTytuł: ${e.title}` : "";
       return `# ${e.date} — ${mood}${title}\n${stripHtml(e.content)}`;
     })
     .join("\n\n---\n\n");
-}
-
-// Buduje prompt z dotychczasową rozmową (multi-turn przez replay — PRD §6.4).
-function buildPrompt(history: HistoryMsg[], message: string): string {
-  if (history.length === 0) return message;
-  const transcript = history
-    .map((m) => `${m.role === "user" ? "Użytkowniczka" : "Freud"}: ${m.content}`)
-    .join("\n");
-  return `Dotychczasowa rozmowa:\n${transcript}\n\nNowa wiadomość użytkowniczki:\n${message}`;
 }
 
 export async function POST(request: Request) {
@@ -146,65 +116,43 @@ export async function POST(request: Request) {
     history = (rows ?? []) as HistoryMsg[];
   }
 
-  // 4. Narzędzie agenta: zwraca wpisy istotne dla bieżącego trybu (scope ustalony serwerowo).
-  const entriesTool = tool(
-    "pobierz_wpisy",
-    mode === "dzien"
-      ? "Zwraca wpis(y) z dziennika z aktualnie wybranego dnia."
-      : "Zwraca wszystkie wpisy z dziennika użytkowniczki.",
-    {},
-    async () => {
-      let q = supabase
-        .from("entries")
-        .select("date, mood, title, content")
-        .order("date", { ascending: true });
-      if (mode === "dzien" && date) q = q.eq("date", date);
-      const { data, error } = await q;
-      const text = error
-        ? "Nie udało się pobrać wpisów."
-        : formatEntries((data ?? []) as EntryRow[]);
-      return { content: [{ type: "text", text }] };
-    },
-  );
+  // 4. Wpisy wg trybu (wstrzykiwane do system promptu)
+  let entriesQuery = supabase
+    .from("entries")
+    .select("date, mood, title, content")
+    .order("date", { ascending: true });
+  if (mode === "dzien" && date) entriesQuery = entriesQuery.eq("date", date);
+  const { data: entryRows } = await entriesQuery;
+  const entriesText = formatEntries((entryRows ?? []) as EntryRow[]);
 
-  const mcp = createSdkMcpServer({
-    name: "pauza",
-    version: "1.0.0",
-    tools: [entriesTool],
-  });
-
-  // 5. Wywołanie agenta
+  // 5. Wywołanie modelu (Messages API)
   try {
-    const response = query({
-      prompt: buildPrompt(history, message),
-      options: {
-        model: MODEL,
-        systemPrompt: buildFreudSystemPrompt(mode),
-        mcpServers: { pauza: mcp },
-        allowedTools: ["mcp__pauza__pobierz_wpisy"],
-        tools: [], // wyłącz wbudowane narzędzia (pliki, bash itp.)
-        settingSources: [], // nie ładuj projektowego CLAUDE.md / ustawień
-        permissionMode: "bypassPermissions",
-        maxTurns: 6,
-        env: agentEnv(),
-      },
+    const response = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: MAX_TOKENS,
+      system: [
+        {
+          type: "text",
+          text: buildFreudSystemPrompt(mode),
+          cache_control: { type: "ephemeral" }, // stabilny prefiks — cache persony
+        },
+        {
+          type: "text",
+          text: `Wpisy z dziennika:\n\n${entriesText}`,
+        },
+      ],
+      messages: [
+        ...history.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user" as const, content: message },
+      ],
     });
 
-    let reply = "";
-    for await (const msg of response) {
-      if (msg.type === "result") {
-        if (msg.subtype === "success") {
-          reply = msg.result;
-        } else {
-          return NextResponse.json(
-            { error: "Freud chwilowo milczy — spróbuj ponownie za chwilę." },
-            { status: 502 },
-          );
-        }
-      }
-    }
+    const reply = response.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
 
-    reply = reply.trim();
     if (!reply) {
       return NextResponse.json(
         { error: "Freud chwilowo milczy — spróbuj ponownie za chwilę." },
@@ -222,7 +170,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply });
   } catch (e) {
-    console.error("[/api/chat] błąd agenta:", e);
+    console.error("[/api/chat] błąd modelu:", e);
     return NextResponse.json(
       { error: "Freud chwilowo milczy — spróbuj ponownie za chwilę." },
       { status: 502 },

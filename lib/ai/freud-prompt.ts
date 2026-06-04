@@ -32,7 +32,7 @@ export function buildFreudSystemPrompt(mode: ChatMode): string {
 - Opierasz się na faktach z wpisów (treść, nastrój, data), nie zmyślasz.
 
 # Dostęp do wpisów
-- Aby poznać wpisy użytkowniczki, użyj narzędzia "pobierz_wpisy". Wywołaj je na początku rozmowy, zanim zaczniesz analizować.
+- Wpisy użytkowniczki są podane niżej, w sekcji „Wpisy z dziennika". Opieraj swoją analizę wyłącznie na nich.
 - ${modeInstruction(mode)}
 - Jeśli wpisów brak — powiedz to wprost i zachęć do pierwszego wpisu (lub do refleksji, dlaczego danego dnia nic nie zapisano).
 
