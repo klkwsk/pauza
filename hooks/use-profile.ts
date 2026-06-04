@@ -1,30 +1,53 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import * as storage from "@/lib/storage";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-// Imię użytkowniczki z localStorage. Czyta po zamontowaniu (unika rozjazdu
-// SSR/hydratacji) i odświeża się przy zmianach w innej karcie.
+// Imię użytkowniczki z konta (Google OAuth). Bierze pierwszą część z
+// user_metadata, a w razie braku — fragment przed @ z adresu e-mail.
+function deriveName(
+  metadata: Record<string, unknown> | undefined,
+  email: string | undefined,
+): string {
+  const full =
+    (metadata?.full_name as string | undefined) ??
+    (metadata?.name as string | undefined) ??
+    "";
+  if (full) return full.split(" ")[0];
+  if (email) return email.split("@")[0];
+  return "";
+}
+
 export function useProfile() {
-  const [name, setNameState] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setNameState(storage.getName());
-    setLoading(false);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === null || e.key === storage.PROFILE_KEY) {
-        setNameState(storage.getName());
-      }
+    const supabase = createClient();
+    let active = true;
+
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!active) return;
+      setName(deriveName(user?.user_metadata, user?.email));
+      setLoading(false);
+    })();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setName(
+        deriveName(session?.user?.user_metadata, session?.user?.email),
+      );
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const setName = useCallback((value: string) => {
-    storage.setName(value);
-    setNameState(value);
-  }, []);
-
-  return { name, loading, setName };
+  return { name, loading };
 }

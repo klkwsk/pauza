@@ -87,6 +87,26 @@ export function NibIcon({ className }: { className?: string }) {
   );
 }
 
+// Iskra / AI — duża czteroramienna gwiazdka z mniejszą obok, znak „inteligencji”
+export function SparkleIcon({ className }: { className?: string }) {
+  return (
+    <IconBase className={className}>
+      <path d="M13 6 C13.6 9.8 15.2 11.4 19 12 C15.2 12.6 13.6 14.2 13 18 C12.4 14.2 10.8 12.6 7 12 C10.8 11.4 12.4 9.8 13 6 Z" />
+      <path d="M21.5 17 C21.8 19 22.6 19.8 24.6 20.1 C22.6 20.4 21.8 21.2 21.5 23.2 C21.2 21.2 20.4 20.4 18.4 20.1 C20.4 19.8 21.2 19 21.5 17 Z" />
+    </IconBase>
+  );
+}
+
+// Wysyłka — strzałka skierowana w prawo, „odręczny” grocik
+export function SendIcon({ className }: { className?: string }) {
+  return (
+    <IconBase className={className}>
+      <path d="M7 16 L24 16" />
+      <path d="M17.5 9.5 L24 16 L17.5 22.5" />
+    </IconBase>
+  );
+}
+
 // Kosz na śmieci — pokrywa z uchwytem, korpus i dwie kreski w środku
 export function TrashIcon({ className }: { className?: string }) {
   return (

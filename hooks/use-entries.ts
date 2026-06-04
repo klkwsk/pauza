@@ -4,25 +4,35 @@ import { useCallback, useEffect, useState } from "react";
 import type { Entry } from "@/lib/types";
 import * as storage from "@/lib/storage";
 
-// Lista wpisów z localStorage. Czyta po zamontowaniu (unika rozjazdu SSR/hydratacji)
-// i odświeża się przy zmianach w innej karcie.
+// Lista wpisów z Supabase. Czyta po zamontowaniu.
 export function useEntries() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(() => {
-    setEntries(storage.getEntries());
+  const refresh = useCallback(async () => {
+    try {
+      setEntries(await storage.getEntries());
+    } catch {
+      setEntries([]);
+    }
   }, []);
 
   useEffect(() => {
-    refresh();
-    setLoading(false);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === null || e.key === storage.STORAGE_KEY) refresh();
+    let active = true;
+    (async () => {
+      try {
+        const data = await storage.getEntries();
+        if (active) setEntries(data);
+      } catch {
+        if (active) setEntries([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [refresh]);
+  }, []);
 
   return { entries, loading, refresh };
 }
@@ -33,8 +43,20 @@ export function useEntry(id: string) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setEntry(storage.getEntry(id));
-    setLoading(false);
+    let active = true;
+    (async () => {
+      try {
+        const data = await storage.getEntry(id);
+        if (active) setEntry(data);
+      } catch {
+        if (active) setEntry(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   return { entry, loading };

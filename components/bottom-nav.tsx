@@ -48,8 +48,8 @@ function ChartBarIcon({ className }: { className?: string }) {
 export function BottomNav() {
   const pathname = usePathname();
 
-  // Ukryj pasek w formularzu wpisu (nowy wpis oraz edycja) i na onboardingu
-  if (pathname === "/new" || pathname.endsWith("/edit") || pathname === "/welcome")
+  // Ukryj pasek w formularzu wpisu (nowy wpis oraz edycja) i na ekranie logowania
+  if (pathname === "/new" || pathname.endsWith("/edit") || pathname === "/login")
     return null;
 
   const isHome = pathname === "/";

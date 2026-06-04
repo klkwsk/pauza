@@ -33,8 +33,9 @@ export function EntryForm({ entry }: { entry?: Entry }) {
   const [mood, setMood] = useState<Mood | null>(entry?.mood ?? null);
   const [contentError, setContentError] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isContentEmpty(content)) {
       setContentError(true);
@@ -42,21 +43,31 @@ export function EntryForm({ entry }: { entry?: Entry }) {
       return;
     }
     const input = { title: title.trim(), content, date, mood };
-    if (isEdit && entry) {
-      updateEntry(entry.id, input);
-      toast.success("Zapisano zmiany.");
-    } else {
-      createEntry(input);
-      toast.success("Wpis zapisany.");
+    setSubmitting(true);
+    try {
+      if (isEdit && entry) {
+        await updateEntry(entry.id, input);
+        toast.success("Zapisano zmiany.");
+      } else {
+        await createEntry(input);
+        toast.success("Wpis zapisany.");
+      }
+      router.push("/");
+    } catch {
+      setSubmitting(false);
+      toast.error("Nie udało się zapisać wpisu.");
     }
-    router.push("/");
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!entry) return;
-    deleteEntry(entry.id);
-    toast.success("Wpis usunięty.");
-    router.push("/");
+    try {
+      await deleteEntry(entry.id);
+      toast.success("Wpis usunięty.");
+      router.push("/");
+    } catch {
+      toast.error("Nie udało się usunąć wpisu.");
+    }
   }
 
   return (
@@ -143,8 +154,8 @@ export function EntryForm({ entry }: { entry?: Entry }) {
           >
             Anuluj
           </Button>
-          <Button type="submit" className="h-10">
-            Zapisz
+          <Button type="submit" className="h-10" disabled={submitting}>
+            {submitting ? "Zapisywanie…" : "Zapisz"}
           </Button>
         </div>
       </div>

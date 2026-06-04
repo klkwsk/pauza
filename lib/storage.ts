@@ -1,87 +1,97 @@
-import type { Entry, EntryInput } from "@/lib/types";
+import type { Entry, EntryInput, Mood } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
 
-export const STORAGE_KEY = "pauza:entries";
-export const PROFILE_KEY = "pauza:profile";
+// Wiersz tabeli public.entries (snake_case).
+type EntryRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  date: string;
+  mood: number | null;
+  created_at: string;
+  updated_at: string;
+};
 
-function isBrowser(): boolean {
-  return typeof window !== "undefined";
-}
-
-function read(): Entry[] {
-  if (!isBrowser()) return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed as Entry[];
-  } catch {
-    return [];
-  }
-}
-
-function write(entries: Entry[]): void {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-}
-
-// Najnowsze na górze: malejąco po dacie wpisu, a przy remisie po czasie utworzenia.
-function sortEntries(entries: Entry[]): Entry[] {
-  return [...entries].sort((a, b) => {
-    if (a.date !== b.date) return a.date < b.date ? 1 : -1;
-    return a.createdAt < b.createdAt ? 1 : -1;
-  });
-}
-
-export function getEntries(): Entry[] {
-  return sortEntries(read());
-}
-
-export function getEntry(id: string): Entry | null {
-  return read().find((e) => e.id === id) ?? null;
-}
-
-export function createEntry(input: EntryInput): Entry {
-  const now = new Date().toISOString();
-  const entry: Entry = {
-    id: crypto.randomUUID(),
-    ...input,
-    createdAt: now,
-    updatedAt: now,
+function rowToEntry(row: EntryRow): Entry {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    date: row.date,
+    mood: (row.mood as Mood | null) ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
-  write([entry, ...read()]);
-  return entry;
 }
 
-export function updateEntry(id: string, input: EntryInput): Entry | null {
-  const entries = read();
-  const idx = entries.findIndex((e) => e.id === id);
-  if (idx === -1) return null;
-  const updated: Entry = {
-    ...entries[idx],
-    ...input,
-    updatedAt: new Date().toISOString(),
-  };
-  entries[idx] = updated;
-  write(entries);
-  return updated;
+export async function getEntries(): Promise<Entry[]> {
+  const supabase = createClient();
+  // RLS ogranicza do właściciela; sortowanie: najnowsze na górze.
+  const { data, error } = await supabase
+    .from("entries")
+    .select("*")
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as EntryRow[]).map(rowToEntry);
 }
 
-export function deleteEntry(id: string): void {
-  write(read().filter((e) => e.id !== id));
+export async function getEntry(id: string): Promise<Entry | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("entries")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? rowToEntry(data as EntryRow) : null;
 }
 
-// Profil użytkowniczki (na razie tylko imię). Pusty string = nie podano.
-export function getName(): string {
-  if (!isBrowser()) return "";
-  try {
-    return window.localStorage.getItem(PROFILE_KEY) ?? "";
-  } catch {
-    return "";
-  }
+export async function createEntry(input: EntryInput): Promise<Entry> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Brak zalogowanego użytkownika.");
+
+  const { data, error } = await supabase
+    .from("entries")
+    .insert({
+      user_id: user.id,
+      title: input.title,
+      content: input.content,
+      date: input.date,
+      mood: input.mood,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return rowToEntry(data as EntryRow);
 }
 
-export function setName(name: string): void {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(PROFILE_KEY, name);
+export async function updateEntry(
+  id: string,
+  input: EntryInput,
+): Promise<Entry | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("entries")
+    .update({
+      title: input.title,
+      content: input.content,
+      date: input.date,
+      mood: input.mood,
+    })
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  return data ? rowToEntry(data as EntryRow) : null;
+}
+
+export async function deleteEntry(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("entries").delete().eq("id", id);
+  if (error) throw error;
 }
