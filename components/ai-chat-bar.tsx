@@ -1,114 +1,35 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { SendIcon, SparkleIcon } from "@/components/icons";
 import { AiChatSheet, type ChatMessage } from "@/components/ai-chat-sheet";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-// Pasek rozmowy z agentem „Freud".
-// Tryb wynika z `selectedDate`: dzień → rozmowa trwała (z bazy), brak → rozmowa ogólna (ulotna).
+// Pasek rozmowy z agentem „Ekspert" (CBT) (wariant mobilny: pasek + wysuwany sheet).
+// Stan rozmowy pochodzi z useExpertChat na stronie (współdzielony z panelem desktopowym).
 export function AiChatBar({
   selectedDate,
+  messages,
+  onSend,
+  sending,
   className,
 }: {
   selectedDate: string | null;
+  messages: ChatMessage[];
+  onSend: (text: string) => void;
+  sending: boolean;
   className?: string;
 }) {
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
-  const [sending, setSending] = useState(false);
-
-  // Osobne wątki: dzienny (przeładowywany przy zmianie dnia) i ogólny (ulotny).
-  const [dayMessages, setDayMessages] = useState<ChatMessage[]>([]);
-  const [generalMessages, setGeneralMessages] = useState<ChatMessage[]>([]);
-
-  const messages = selectedDate ? dayMessages : generalMessages;
-  const setMessages = selectedDate ? setDayMessages : setGeneralMessages;
-
-  // Wczytanie historii rozmowy dla wybranego dnia (z Supabase, RLS = tylko swoje).
-  useEffect(() => {
-    if (!selectedDate) return;
-    let active = true;
-    (async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("chat_messages")
-        .select("role, content")
-        .eq("date", selectedDate)
-        .order("created_at", { ascending: true });
-      if (!active) return;
-      setDayMessages(
-        (data ?? []).map((m, i) => ({
-          id: `${selectedDate}-${i}`,
-          role: m.role === "assistant" ? "agent" : "user",
-          text: m.content,
-        })),
-      );
-    })();
-    return () => {
-      active = false;
-    };
-  }, [selectedDate]);
-
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || sending) return;
-      setSending(true);
-
-      const agentId = crypto.randomUUID();
-      // Historia (bez nowej wiadomości) do wysłania na serwer.
-      const history = messages
-        .filter((m) => !m.pending)
-        .map((m) => ({
-          role: m.role === "agent" ? ("assistant" as const) : ("user" as const),
-          content: m.text,
-        }));
-
-      setMessages((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), role: "user", text: trimmed },
-        { id: agentId, role: "agent", text: "piszę…", pending: true },
-      ]);
-
-      try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: trimmed, date: selectedDate, history }),
-        });
-        const data = await res.json();
-        const text = res.ok
-          ? data.reply
-          : data.error ?? "Coś poszło nie tak. Spróbuj ponownie.";
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === agentId ? { ...m, text, pending: false } : m,
-          ),
-        );
-      } catch {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === agentId
-              ? { ...m, text: "Brak połączenia. Spróbuj ponownie.", pending: false }
-              : m,
-          ),
-        );
-      } finally {
-        setSending(false);
-      }
-    },
-    [messages, sending, selectedDate, setMessages],
-  );
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = value.trim();
     if (!text) return;
-    sendMessage(text);
+    onSend(text);
     setValue("");
     setOpen(true);
   }
@@ -129,7 +50,7 @@ export function AiChatBar({
           type="text"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder={selectedDate ? "Zapytaj Freuda o ten dzień…" : "Co dzisiaj czujesz?"}
+          placeholder={selectedDate ? "Zapytaj Eksperta o ten dzień…" : "Co dzisiaj czujesz?"}
           aria-label="Zapytaj agenta AI"
           className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
         />
@@ -142,7 +63,7 @@ export function AiChatBar({
         open={open}
         onOpenChange={setOpen}
         messages={messages}
-        onSend={sendMessage}
+        onSend={onSend}
       />
     </>
   );

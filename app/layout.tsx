@@ -36,9 +36,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} h-full antialiased`}
     >
       <body className="min-h-dvh bg-background">
-        <div className="mx-auto w-full max-w-2xl px-4 pt-8 pb-28 sm:pt-12">
-          {children}
-        </div>
+        {children}
         <BottomNav />
         <Toaster theme="light" position="top-center" />
       </body>

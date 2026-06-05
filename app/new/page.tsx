@@ -6,7 +6,7 @@ import { EntryForm } from "@/components/entry-form";
 
 export default function NewEntryPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 pt-8 pb-28 sm:pt-12">
       <div>
         <Button
           variant="ghost"

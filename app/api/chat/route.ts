@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
 import { createClient } from "@/lib/supabase/server";
-import { buildFreudSystemPrompt, type ChatMode } from "@/lib/ai/freud-prompt";
+import { buildExpertSystemPrompt, type ChatMode } from "@/lib/ai/expert-prompt";
 
 // Zwykłe wywołanie HTTP do Anthropic — działa na Vercel serverless.
 export const runtime = "nodejs";
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
   }
   if (!allowed) {
     return NextResponse.json(
-      { error: "Dzienny limit rozmów z Freudem został wyczerpany. Wróć jutro." },
+      { error: "Dzienny limit rozmów z Ekspertem został wyczerpany. Wróć jutro." },
       { status: 429 },
     );
   }
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
       system: [
         {
           type: "text",
-          text: buildFreudSystemPrompt(mode),
+          text: buildExpertSystemPrompt(mode),
           cache_control: { type: "ephemeral" }, // stabilny prefiks — cache persony
         },
         {
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
 
     if (!reply) {
       return NextResponse.json(
-        { error: "Freud chwilowo milczy — spróbuj ponownie za chwilę." },
+        { error: "Ekspert chwilowo milczy — spróbuj ponownie za chwilę." },
         { status: 502 },
       );
     }
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
   } catch (e) {
     console.error("[/api/chat] błąd modelu:", e);
     return NextResponse.json(
-      { error: "Freud chwilowo milczy — spróbuj ponownie za chwilę." },
+      { error: "Ekspert chwilowo milczy — spróbuj ponownie za chwilę." },
       { status: 502 },
     );
   }

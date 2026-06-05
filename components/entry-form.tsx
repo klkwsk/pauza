@@ -23,7 +23,18 @@ import { createEntry, deleteEntry, updateEntry } from "@/lib/storage";
 import { formatDate, isContentEmpty, todayISODate } from "@/lib/format";
 import type { Entry, Mood } from "@/lib/types";
 
-export function EntryForm({ entry }: { entry?: Entry }) {
+export function EntryForm({
+  entry,
+  onSaved,
+  onCancel,
+  onDeleted,
+}: {
+  entry?: Entry;
+  // Callbacki dla wariantu inline (desktop). Gdy nie podane → nawigacja na „/".
+  onSaved?: (saved: Entry) => void;
+  onCancel?: () => void;
+  onDeleted?: () => void;
+}) {
   const router = useRouter();
   const isEdit = Boolean(entry);
 
@@ -45,14 +56,20 @@ export function EntryForm({ entry }: { entry?: Entry }) {
     const input = { title: title.trim(), content, date, mood };
     setSubmitting(true);
     try {
+      let saved: Entry;
       if (isEdit && entry) {
-        await updateEntry(entry.id, input);
+        saved = (await updateEntry(entry.id, input)) ?? { ...entry, ...input };
         toast.success("Zapisano zmiany.");
       } else {
-        await createEntry(input);
+        saved = await createEntry(input);
         toast.success("Wpis zapisany.");
       }
-      router.push("/");
+      if (onSaved) {
+        onSaved(saved);
+        setSubmitting(false);
+      } else {
+        router.push("/");
+      }
     } catch {
       setSubmitting(false);
       toast.error("Nie udało się zapisać wpisu.");
@@ -64,7 +81,8 @@ export function EntryForm({ entry }: { entry?: Entry }) {
     try {
       await deleteEntry(entry.id);
       toast.success("Wpis usunięty.");
-      router.push("/");
+      if (onDeleted) onDeleted();
+      else router.push("/");
     } catch {
       toast.error("Nie udało się usunąć wpisu.");
     }
@@ -150,7 +168,7 @@ export function EntryForm({ entry }: { entry?: Entry }) {
             type="button"
             variant="ghost"
             className="h-10"
-            onClick={() => router.push("/")}
+            onClick={() => (onCancel ? onCancel() : router.push("/"))}
           >
             Anuluj
           </Button>

@@ -64,7 +64,7 @@ export function AiChatSheet({
             <div className="flex w-full items-center gap-2">
               <SparkleIcon className="size-5 shrink-0 text-primary" />
               <DialogPrimitive.Title className="font-heading text-base font-medium">
-                Rozmowa
+                Rozmowa z Ekspertem
               </DialogPrimitive.Title>
             </div>
           </div>
