@@ -1,21 +1,21 @@
 import type { ReactNode, SVGProps } from "react";
 import type { Mood } from "@/lib/types";
 
-// Topiący się „acid smiley" — wypełnienie żółte, czarny obrys i rysy (knockout-blob).
+// „Acid smiley" — wypełnienie żółte, czarny obrys i rysy (knockout-blob).
 // Kolorystyczny akcent celowo wyłamuje się z czarno-białej, liniowej rodziny ikon.
-// Im gorszy nastrój (1), tym mocniej twarz się rozpływa i ścieka kroplami.
+// Nastrój rozróżniają usta i oczy; sylwetka jest jednakowo okrągła dla 1–5.
 const ACID = "#FFD400";
 const INK = "#000000";
 
-// Sylwetki twarzy: 3–5 okrągłe (trzymają formę), 1–2 topią się i kapią coraz mocniej.
+// Wszystkie nastroje używają tej samej okrągłej sylwetki.
 const ROUND =
   "M16 3 C22.8 3 29 8.4 29 15 C29 21.6 22.8 27 16 27 C9.2 27 3 21.6 3 15 C3 8.4 9.2 3 16 3 Z";
 const BODIES: Record<Mood, string> = {
   5: ROUND,
   4: ROUND,
   3: ROUND,
-  2: "M16 3 C22.8 3 29 8.2 29 14.8 C29 21 23.6 26.2 17.2 26.6 C17 27.8 16.7 29.2 15.6 29.3 C14.5 29.4 14.1 28 14 26.5 C8 26 3 21.2 3 14.8 C3 8.2 9.2 3 16 3 Z",
-  1: "M16 2.4 C22.8 2.4 28.6 7 28.6 13.2 C28.6 17 27 20 24.2 21.8 C23.4 23.4 22.4 24.4 21 24.8 C19.6 25.2 19.4 27 19 28.6 C18.7 30 18.4 31.2 17 31.4 C15.6 31.6 14.6 30.6 14.4 29.2 C14.1 27.4 14 25.4 13 24.8 C11.6 24.4 10 24.2 8.6 23.4 C5.4 21.6 3.4 17.4 3.4 13.2 C3.4 7 9.2 2.4 16 2.4 Z",
+  2: ROUND,
+  1: ROUND,
 };
 
 // Usta jako cienka, falista kreska (jak w inspiracji #1) — od grymasu (1) po szeroki uśmiech (5).
