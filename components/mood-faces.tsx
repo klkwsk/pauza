@@ -1,75 +1,95 @@
-import type { ReactNode } from "react";
+import type { ReactNode, SVGProps } from "react";
 import type { Mood } from "@/lib/types";
 
-// Nieregularny, „odręczny" obrys twarzy — celowo lekko krzywe krzywe Béziera,
-// żeby uzyskać szkicowy, rysowany ręką charakter.
-const WOBBLY_CIRCLE =
-  "M16 3.4 C22.6 2.6 29.2 8 28.7 15.3 C29.4 22.5 22.5 29.2 15.3 28.6 C8.3 29.4 2.8 22.6 3.3 15.5 C2.7 8.4 9.3 3.7 16 3.4 Z";
+// Topiący się „acid smiley" — wypełnienie żółte, czarny obrys i rysy (knockout-blob).
+// Kolorystyczny akcent celowo wyłamuje się z czarno-białej, liniowej rodziny ikon.
+// Im gorszy nastrój (1), tym mocniej twarz się rozpływa i ścieka kroplami.
+const ACID = "#FFD400";
+const INK = "#000000";
 
-// Oczka jako krótkie, lekko krzywe kreski
-const EYES = (
-  <>
-    <path d="M12 11.9 C11.8 12.7 11.9 13.6 12.1 14.4" />
-    <path d="M20 11.9 C20.2 12.7 20.1 13.6 19.9 14.4" />
-  </>
-);
+// Sylwetki twarzy: 3–5 okrągłe (trzymają formę), 1–2 topią się i kapią coraz mocniej.
+const ROUND =
+  "M16 3 C22.8 3 29 8.4 29 15 C29 21.6 22.8 27 16 27 C9.2 27 3 21.6 3 15 C3 8.4 9.2 3 16 3 Z";
+const BODIES: Record<Mood, string> = {
+  5: ROUND,
+  4: ROUND,
+  3: ROUND,
+  2: "M16 3 C22.8 3 29 8.2 29 14.8 C29 21 23.6 26.2 17.2 26.6 C17 27.8 16.7 29.2 15.6 29.3 C14.5 29.4 14.1 28 14 26.5 C8 26 3 21.2 3 14.8 C3 8.2 9.2 3 16 3 Z",
+  1: "M16 2.4 C22.8 2.4 28.6 7 28.6 13.2 C28.6 17 27 20 24.2 21.8 C23.4 23.4 22.4 24.4 21 24.8 C19.6 25.2 19.4 27 19 28.6 C18.7 30 18.4 31.2 17 31.4 C15.6 31.6 14.6 30.6 14.4 29.2 C14.1 27.4 14 25.4 13 24.8 C11.6 24.4 10 24.2 8.6 23.4 C5.4 21.6 3.4 17.4 3.4 13.2 C3.4 7 9.2 2.4 16 2.4 Z",
+};
 
-// Wesołe, łukowate oczka dla najlepszego nastroju
-const HAPPY_EYES = (
-  <>
-    <path d="M10.6 13.6 C11.4 12.3 12.7 12.3 13.5 13.5" />
-    <path d="M18.5 13.5 C19.3 12.3 20.6 12.3 21.4 13.6" />
-  </>
-);
-
-// Najsmutniejszy nastrój — „zmartwione” brwi uniesione w środku + zatroskane oczka
-const SAD_EYES = (
-  <>
-    <path d="M10.4 12.4 C11.3 11.1 12.4 10.9 13.3 11.2" />
-    <path d="M21.6 12.4 C20.7 11.1 19.6 10.9 18.7 11.2" />
-    <path d="M12.1 13.6 C11.95 14.1 11.95 14.6 12.05 15" />
-    <path d="M19.9 13.6 C20.05 14.1 20.05 14.6 19.95 15" />
-  </>
-);
-
-// Usta zależne od nastroju (1 = smutny … 5 = uradowany)
+// Usta jako cienka, falista kreska (jak w inspiracji #1) — od grymasu (1) po szeroki uśmiech (5).
 const MOUTHS: Record<Mood, string> = {
-  1: "M10 25 C12.7 18.4 19.3 18.3 22 24.8",
-  2: "M11 22.6 C13.4 20 18.6 19.9 21 22.4",
-  3: "M11 21.7 C14 21.4 18 22.2 21 21.6",
-  4: "M11 21 C13.6 24.2 18.4 24.1 21 20.8",
-  5: "M10.4 20.4 C13.2 26.6 18.8 26.5 21.6 20.3",
+  1: "M10.5 21 C12.9 16.4 19.1 16.4 21.5 21",
+  2: "M10.5 22.6 C13 20 19 20 21.5 22.6",
+  3: "M10 21 C12.4 22.4 14.2 19.8 16 21 C17.8 22.2 19.6 19.8 22 21",
+  4: "M10.5 20.2 C13 23.4 19 23.4 21.5 20.2",
+  5: "M10 20 C12.6 25 19.4 25 22 20",
 };
 
-const EYES_BY_MOOD: Record<Mood, ReactNode> = {
-  1: SAD_EYES,
-  2: EYES,
-  3: EYES,
-  4: EYES,
-  5: HAPPY_EYES,
-};
+// Oczy: czarne „blobowe" owale. Przy smutku (1–2) lekko przekrzywione, „zmartwione".
+// Przy najlepszym nastroju (5) — śmiejące się, zamknięte łuki (◡◡).
+function Eyes({ mood }: { mood: Mood }): ReactNode {
+  if (mood === 5) {
+    return (
+      <g fill="none" stroke={INK} strokeWidth={2} strokeLinecap="round">
+        <path d="M10.4 13.8 C11.2 12 12.8 12 13.6 13.8" />
+        <path d="M18.4 13.8 C19.2 12 20.8 12 21.6 13.8" />
+      </g>
+    );
+  }
+  const tilt = mood === 1 ? 22 : mood === 2 ? 12 : 0;
+  return (
+    <g fill={INK} stroke="none">
+      <ellipse
+        cx={12.2}
+        cy={12.6}
+        rx={1.55}
+        ry={2.5}
+        transform={tilt ? `rotate(${tilt} 12.2 12.6)` : undefined}
+      />
+      <ellipse
+        cx={19.8}
+        cy={12.6}
+        rx={1.55}
+        ry={2.5}
+        transform={tilt ? `rotate(${-tilt} 19.8 12.6)` : undefined}
+      />
+    </g>
+  );
+}
 
 export function MoodFace({
   mood,
   className,
+  ...rest
 }: {
   mood: Mood;
   className?: string;
-}) {
+} & SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 32 32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.1}
-      strokeLinecap="round"
-      strokeLinejoin="round"
       className={className}
       aria-hidden
+      {...rest}
     >
-      <path d={WOBBLY_CIRCLE} />
-      {EYES_BY_MOOD[mood]}
-      <path d={MOUTHS[mood]} />
+      <path
+        d={BODIES[mood]}
+        fill={ACID}
+        stroke={INK}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <Eyes mood={mood} />
+      <path
+        d={MOUTHS[mood]}
+        fill="none"
+        stroke={INK}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

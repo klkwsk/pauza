@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 // Wspólna logika rozmowy z agentem „Ekspert" (CBT).
 // Tryb wynika z `selectedDate`: dzień → rozmowa trwała (z bazy), brak → rozmowa ogólna (ulotna).
-// Współdzielona przez pasek mobilny (AiChatBar) i panel desktopowy (AiChatPanel).
+// Wykorzystywana przez pływający przycisk czatu (AiChatButton) i warstwę rozmowy (AiChatSheet).
 export function useExpertChat(selectedDate: string | null) {
   const [sending, setSending] = useState(false);
 
@@ -22,6 +22,9 @@ export function useExpertChat(selectedDate: string | null) {
   useEffect(() => {
     if (!selectedDate) return;
     let active = true;
+    // Wyczyść poprzednią historię, by UI (np. auto-otwieranie czatu) nie reagowało
+    // na nieaktualne wiadomości w oknie między zmianą dnia a pobraniem nowych.
+    setDayMessages([]);
     (async () => {
       const supabase = createClient();
       const { data } = await supabase

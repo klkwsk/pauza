@@ -79,12 +79,16 @@ export function RichTextEditor({
 
   return (
     <div
+      style={{ borderWidth: "1px" }}
       className={cn(
         "overflow-hidden rounded-lg border border-input bg-card transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         invalid && "border-destructive ring-3 ring-destructive/20"
       )}
     >
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/40 p-1.5">
+      <div
+        style={{ borderBottomWidth: "1px" }}
+        className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/40 p-1.5"
+      >
         <ToolbarButton
           label="Pogrubienie"
           active={state?.isBold}

@@ -58,7 +58,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Nawigacja główna"
-      className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full bg-card px-2 py-1 shadow-lg ring-1 ring-black/5"
+      className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full bg-card px-2 py-1 shadow-lg ring-1 ring-black/5 lg:hidden"
     >
       <Link
         href="/"

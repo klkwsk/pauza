@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Literata, Geist, Geist_Mono } from "next/font/google";
+import { Literata, Geist, Geist_Mono, Archivo_Black } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { BottomNav } from "@/components/bottom-nav";
+import { AppShell } from "@/components/app-shell";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -20,6 +20,12 @@ const literata = Literata({
   style: ["normal", "italic"],
 });
 
+const archivoBlack = Archivo_Black({
+  variable: "--font-archivo",
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "Pauza — dziennik",
   description: "Prosty dziennik codziennych myśli i nastroju.",
@@ -33,11 +39,10 @@ export default function RootLayout({
   return (
     <html
       lang="pl"
-      className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} ${archivoBlack.variable} h-full antialiased`}
     >
       <body className="min-h-dvh bg-background">
-        {children}
-        <BottomNav />
+        <AppShell>{children}</AppShell>
         <Toaster theme="light" position="top-center" />
       </body>
     </html>

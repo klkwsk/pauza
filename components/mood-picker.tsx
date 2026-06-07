@@ -24,6 +24,7 @@ export function MoodPicker({ value, onChange }: MoodPickerProps) {
             aria-label={m.label}
             title={m.label}
             onClick={() => onChange(active ? null : m.value)}
+            style={{ borderWidth: "1px" }}
             className={cn(
               "flex size-11 items-center justify-center rounded-full border transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
               active

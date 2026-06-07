@@ -35,7 +35,7 @@ export default function EditEntryPage() {
           <ArrowLeft />
           Wszystkie wpisy
         </Button>
-        <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight">
+        <h1 className="mt-2 font-heading text-2xl font-medium tracking-tight">
           Edytuj wpis
         </h1>
       </div>

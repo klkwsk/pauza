@@ -119,3 +119,45 @@ export function TrashIcon({ className }: { className?: string }) {
     </IconBase>
   );
 }
+
+// Serduszko — wyróżnienie zdarzenia. `filled` wypełnia kształt kolorem.
+export function HeartIcon({
+  className,
+  filled,
+}: {
+  className?: string;
+  filled?: boolean;
+}) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={2.1}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M16 25 C16 25 6 19.2 6 12.6 C6 9.2 8.5 7 11.3 7 C13.4 7 15.1 8.2 16 10 C16.9 8.2 18.6 7 20.7 7 C23.5 7 26 9.2 26 12.6 C26 19.2 16 25 16 25 Z" />
+    </svg>
+  );
+}
+
+// Strzałka w lewo (szewron) — do nawigacji między okresami
+export function ChevronLeftIcon({ className }: { className?: string }) {
+  return (
+    <IconBase className={className}>
+      <path d="M19.5 8.5 C16.4 11 13.6 13.6 11 16 C13.6 18.6 16.4 21.2 19.5 23.5" />
+    </IconBase>
+  );
+}
+
+// Strzałka w prawo (szewron) — do nawigacji między okresami
+export function ChevronRightIcon({ className }: { className?: string }) {
+  return (
+    <IconBase className={className}>
+      <path d="M12.5 8.5 C15.6 11 18.4 13.6 21 16 C18.4 18.6 15.6 21.2 12.5 23.5" />
+    </IconBase>
+  );
+}

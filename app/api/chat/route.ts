@@ -1,66 +1,16 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
 import { createClient } from "@/lib/supabase/server";
-import { buildExpertSystemPrompt, type ChatMode } from "@/lib/ai/expert-prompt";
+import type { ChatMode } from "@/lib/ai/expert-prompt";
+import { formatEntries, type EntryRow } from "@/lib/ai/expert-context";
+import {
+  generateExpertReply,
+  type HistoryMsg,
+} from "@/lib/ai/expert-engine";
 
 // Zwykłe wywołanie HTTP do Anthropic — działa na Vercel serverless.
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-const MODEL = "claude-haiku-4-5";
-const MAX_TOKENS = 800;
-
-const anthropic = new Anthropic(); // czyta ANTHROPIC_API_KEY z env
-
-type Role = "user" | "assistant";
-interface HistoryMsg {
-  role: Role;
-  content: string;
-}
-
-// Usuwa HTML z treści wpisu (Tiptap) → czysty tekst dla modelu.
-function stripHtml(html: string): string {
-  return html
-    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-const MOOD_LABEL: Record<number, string> = {
-  1: "bardzo źle",
-  2: "źle",
-  3: "neutralnie",
-  4: "dobrze",
-  5: "bardzo dobrze",
-};
-
-interface EntryRow {
-  date: string;
-  mood: number | null;
-  title: string | null;
-  content: string;
-}
-
-function formatEntries(rows: EntryRow[]): string {
-  if (rows.length === 0) return "Brak wpisów.";
-  return rows
-    .map((e) => {
-      const mood =
-        e.mood != null
-          ? `nastrój: ${e.mood}/5 (${MOOD_LABEL[e.mood] ?? "?"})`
-          : "nastrój: brak";
-      const title = e.title ? `\nTytuł: ${e.title}` : "";
-      return `# ${e.date} — ${mood}${title}\n${stripHtml(e.content)}`;
-    })
-    .join("\n\n---\n\n");
-}
 
 export async function POST(request: Request) {
   let body: { message?: string; date?: string | null; history?: HistoryMsg[] };
@@ -119,7 +69,7 @@ export async function POST(request: Request) {
   // 4. Wpisy wg trybu (wstrzykiwane do system promptu)
   let entriesQuery = supabase
     .from("entries")
-    .select("date, mood, title, content")
+    .select("date, mood, title, content, event_types, event_note")
     .order("date", { ascending: true });
   if (mode === "dzien" && date) entriesQuery = entriesQuery.eq("date", date);
   const { data: entryRows } = await entriesQuery;
@@ -127,31 +77,12 @@ export async function POST(request: Request) {
 
   // 5. Wywołanie modelu (Messages API)
   try {
-    const response = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: [
-        {
-          type: "text",
-          text: buildExpertSystemPrompt(mode),
-          cache_control: { type: "ephemeral" }, // stabilny prefiks — cache persony
-        },
-        {
-          type: "text",
-          text: `Wpisy z dziennika:\n\n${entriesText}`,
-        },
-      ],
-      messages: [
-        ...history.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user" as const, content: message },
-      ],
+    const reply = await generateExpertReply({
+      entriesText,
+      history,
+      message,
+      mode,
     });
-
-    const reply = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
 
     if (!reply) {
       return NextResponse.json(

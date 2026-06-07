@@ -34,8 +34,14 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname === "/login";
+  // Trasy publiczne (bez redirectu na /login):
+  // - /api/* — uwierzytelniają się same (sesja cookie albo klucz API) i zwracają JSON;
+  //   redirect 302 na HTML /login zepsułby publiczne API.
+  // - /docs — publiczna dokumentacja API.
+  const isPublic =
+    isAuthRoute || pathname.startsWith("/api") || pathname === "/docs";
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
