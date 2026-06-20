@@ -39,6 +39,16 @@ function rowToEntry(row: EntryRow, photoUrl: string | null = null): Entry {
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
+// Best-effort: poproś serwer o policzenie embeddingu wpisu (klucz OpenAI tylko serwerowo).
+// Nie blokuje UI ani nie przerywa zapisu, gdy embedding się nie powiedzie.
+function requestEmbedding(id: string): void {
+  void fetch("/api/entries/embed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  }).catch(() => {});
+}
+
 // Podpisany URL do pojedynczego zdjęcia (lub null gdy brak/błąd).
 async function signPhoto(
   supabase: SupabaseClient,
@@ -141,6 +151,7 @@ export async function createEntry(input: EntryInput): Promise<Entry> {
     .single();
   if (error) throw error;
   const row = data as EntryRow;
+  requestEmbedding(row.id); // best-effort: policz embedding nowego wpisu
   return rowToEntry(row, await signPhoto(supabase, row.photo_path));
 }
 
@@ -179,6 +190,7 @@ export async function updateEntry(
   if (prevPath && prevPath !== row.photo_path) {
     await removePhoto(supabase, prevPath);
   }
+  requestEmbedding(row.id); // treść mogła się zmienić → przelicz embedding
   return rowToEntry(row, await signPhoto(supabase, row.photo_path));
 }
 

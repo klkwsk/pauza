@@ -4,6 +4,7 @@ import { authenticate } from "@/lib/api/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ChatMode } from "@/lib/ai/expert-prompt";
 import { formatEntries, type EntryRow } from "@/lib/ai/expert-context";
+import { retrieveRelevantEntriesText } from "@/lib/ai/retrieval";
 import { generateExpertReply, type HistoryMsg } from "@/lib/ai/expert-engine";
 
 export const runtime = "nodejs";
@@ -71,14 +72,32 @@ export async function POST(request: Request) {
   }
 
   // Wpisy wg trybu (zawężone user_id + ew. date).
-  let entriesQuery = supabase
-    .from("entries")
-    .select("date, mood, title, content, event_types, event_note")
-    .eq("user_id", auth.userId)
-    .order("date", { ascending: true });
-  if (mode === "dzien" && date) entriesQuery = entriesQuery.eq("date", date);
-  const { data: entryRows } = await entriesQuery;
-  const entriesText = formatEntries((entryRows ?? []) as EntryRow[]);
+  let entriesText: string;
+  if (mode === "dzien" && date) {
+    const { data: entryRows } = await supabase
+      .from("entries")
+      .select("date, mood, title, content, event_types, event_note")
+      .eq("user_id", auth.userId)
+      .eq("date", date)
+      .order("date", { ascending: true });
+    entriesText = formatEntries((entryRows ?? []) as EntryRow[]);
+  } else {
+    // Tryb ogólny: wyszukiwanie hybrydowe; fallback do ostatnich 30 wpisów.
+    const retrieved = await retrieveRelevantEntriesText(supabase, auth.userId, message);
+    if (retrieved) {
+      entriesText = retrieved;
+    } else {
+      const { data: entryRows } = await supabase
+        .from("entries")
+        .select("date, mood, title, content, event_types, event_note")
+        .eq("user_id", auth.userId)
+        .order("date", { ascending: false })
+        .limit(30);
+      entriesText = formatEntries(
+        ((entryRows ?? []) as EntryRow[]).slice().reverse(),
+      );
+    }
+  }
 
   try {
     const reply = await generateExpertReply({ entriesText, history, message, mode });

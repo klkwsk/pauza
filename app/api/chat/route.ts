@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { ChatMode } from "@/lib/ai/expert-prompt";
 import { formatEntries, type EntryRow } from "@/lib/ai/expert-context";
+import { retrieveRelevantEntriesText } from "@/lib/ai/retrieval";
 import {
   generateExpertReply,
   type HistoryMsg,
@@ -67,13 +68,32 @@ export async function POST(request: Request) {
   }
 
   // 4. Wpisy wg trybu (wstrzykiwane do system promptu)
-  let entriesQuery = supabase
-    .from("entries")
-    .select("date, mood, title, content, event_types, event_note")
-    .order("date", { ascending: true });
-  if (mode === "dzien" && date) entriesQuery = entriesQuery.eq("date", date);
-  const { data: entryRows } = await entriesQuery;
-  const entriesText = formatEntries((entryRows ?? []) as EntryRow[]);
+  let entriesText: string;
+  if (mode === "dzien" && date) {
+    // Tryb dzienny: wszystkie wpisy z danego dnia (mieszczą się w kontekście).
+    const { data: entryRows } = await supabase
+      .from("entries")
+      .select("date, mood, title, content, event_types, event_note")
+      .eq("date", date)
+      .order("date", { ascending: true });
+    entriesText = formatEntries((entryRows ?? []) as EntryRow[]);
+  } else {
+    // Tryb ogólny: wyszukiwanie hybrydowe (full-text + wektory) najtrafniejszych wpisów.
+    // Fallback (brak klucza OpenAI / błąd / brak trafień): ostatnie 30 wpisów.
+    const retrieved = await retrieveRelevantEntriesText(supabase, user.id, message);
+    if (retrieved) {
+      entriesText = retrieved;
+    } else {
+      const { data: entryRows } = await supabase
+        .from("entries")
+        .select("date, mood, title, content, event_types, event_note")
+        .order("date", { ascending: false })
+        .limit(30);
+      entriesText = formatEntries(
+        ((entryRows ?? []) as EntryRow[]).slice().reverse(),
+      );
+    }
+  }
 
   // 5. Wywołanie modelu (Messages API)
   try {

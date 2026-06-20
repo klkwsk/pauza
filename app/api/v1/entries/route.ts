@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { authenticate } from "@/lib/api/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { EVENT_TYPES } from "@/lib/events";
+import { stripHtml } from "@/lib/ai/expert-context";
+import { embedText } from "@/lib/ai/embeddings";
 
 export const runtime = "nodejs";
 
@@ -143,6 +145,23 @@ export async function POST(request: Request) {
   if (error || !data) {
     console.error("[POST /api/v1/entries] błąd zapisu:", error);
     return NextResponse.json({ error: "Nie udało się zapisać wpisu." }, { status: 500 });
+  }
+
+  // Embedding (best-effort): błąd nie blokuje zapisu — backfill uzupełni później.
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const row = data as EntryRow;
+      const embedInput =
+        (row.title?.trim() ? row.title.trim() + "\n" : "") + stripHtml(row.content);
+      const embedding = await embedText(embedInput || "(pusty wpis)");
+      await supabase
+        .from("entries")
+        .update({ embedding: JSON.stringify(embedding) })
+        .eq("id", row.id)
+        .eq("user_id", auth.userId);
+    } catch (e) {
+      console.error("[POST /api/v1/entries] embedding pominięty:", e);
+    }
   }
 
   return NextResponse.json({ entry: rowToEntry(data as EntryRow) }, { status: 201 });
