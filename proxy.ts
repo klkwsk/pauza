@@ -37,9 +37,9 @@ export async function proxy(request: NextRequest) {
   // Trasy publiczne (bez redirectu na /login):
   // - /api/* — uwierzytelniają się same (sesja cookie albo klucz API) i zwracają JSON;
   //   redirect 302 na HTML /login zepsułby publiczne API.
-  // - /docs — publiczna dokumentacja API.
+  // - /docs (i podstrony, np. /docs/mcp) — publiczna dokumentacja API/MCP.
   const isPublic =
-    isAuthRoute || pathname.startsWith("/api") || pathname === "/docs";
+    isAuthRoute || pathname.startsWith("/api") || pathname.startsWith("/docs");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

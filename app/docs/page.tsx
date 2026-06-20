@@ -1,71 +1,29 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 
 import { MOODS } from "@/lib/moods";
 import { EVENT_TYPES } from "@/lib/events";
-import { ApiKeysManager } from "@/components/api-keys-manager";
+import { Code, Pill, Section } from "@/components/docs-ui";
 
 export const metadata: Metadata = {
   title: "Pauza — dokumentacja API",
   description:
-    "Publiczne API Pauzy: klucze API, dodawanie wpisów, pytania do Eksperta i odczyt wpisów z danego dnia.",
+    "Publiczne REST API Pauzy: dodawanie wpisów, pytania do Eksperta i odczyt wpisów z danego dnia.",
 };
 
-// Prosty blok kodu (server component — bez interakcji).
-function Code({ children }: { children: string }) {
-  return (
-    <pre className="mt-3 overflow-x-auto rounded-xl border bg-card p-4 font-mono text-[0.8rem] leading-relaxed">
-      <code>{children}</code>
-    </pre>
-  );
-}
-
-function Pill({ children }: { children: string }) {
-  return (
-    <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
-      {children}
-    </span>
-  );
-}
-
-function Section({
-  id,
-  title,
-  children,
-}: {
-  id: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className="scroll-mt-8">
-      <h2 className="font-heading text-2xl font-medium tracking-tight">{title}</h2>
-      <div className="mt-3 flex flex-col gap-3 text-sm leading-relaxed text-foreground/90">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-export default function DocsPage() {
+export default function DocsApiPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-40 sm:pt-12">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-4xl font-medium tracking-tight">
-            Dokumentacja
-          </h1>
-          <p className="mt-2 text-base text-muted-foreground">
-            Steruj Pauzą programowo — dla deweloperów i agentów. Każdy endpoint działa
-            w imieniu użytkownika, którego kluczem API się posługujesz.
-          </p>
-        </div>
-        <Link
-          href="/"
-          className="mt-2 shrink-0 text-sm underline underline-offset-4 hover:text-foreground"
-        >
-          ← Pauza
-        </Link>
+      <header>
+        <h1 className="font-heading text-4xl font-medium tracking-tight">REST API</h1>
+        <p className="mt-2 text-base text-muted-foreground">
+          Steruj Pauzą programowo — dla deweloperów i agentów. Każdy endpoint działa w
+          imieniu użytkownika, którego kluczem API się posługujesz. Klucz wygenerujesz w
+          panelu <strong>„Klucze API&quot;</strong> u góry strony.
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Wolisz podłączyć agenta jednym kliknięciem? Zobacz zakładkę{" "}
+          <strong>MCP</strong> u góry.
+        </p>
       </header>
 
       {/* Spis treści */}
@@ -73,63 +31,50 @@ export default function DocsPage() {
         <p className="font-medium">Spis treści</p>
         <ul className="mt-2 flex flex-col gap-1 text-muted-foreground">
           <li>
-            <a href="#klucze" className="underline-offset-4 hover:underline">
-              1. Twoje klucze API
-            </a>
-          </li>
-          <li>
             <a href="#auth" className="underline-offset-4 hover:underline">
-              2. Uwierzytelnianie
+              1. Uwierzytelnianie
             </a>
           </li>
           <li>
             <a href="#bazowy-adres" className="underline-offset-4 hover:underline">
-              3. Adres bazowy, błędy i limity
+              2. Adres bazowy, błędy i limity
             </a>
           </li>
           <li>
             <a href="#dodaj-wpis" className="underline-offset-4 hover:underline">
-              4. POST /api/v1/entries — dodaj wpis
+              3. POST /api/v1/entries — dodaj wpis
             </a>
           </li>
           <li>
             <a href="#pobierz-wpisy" className="underline-offset-4 hover:underline">
-              5. GET /api/v1/entries — wpisy z dnia
+              4. GET /api/v1/entries — wpisy z dnia
             </a>
           </li>
           <li>
             <a href="#ekspert" className="underline-offset-4 hover:underline">
-              6. POST /api/v1/expert — zapytaj Eksperta
+              5. POST /api/v1/expert — zapytaj Eksperta
             </a>
           </li>
           <li>
             <a href="#slowniki" className="underline-offset-4 hover:underline">
-              7. Słowniki (nastrój, typy zdarzeń)
+              6. Słowniki (nastrój, typy zdarzeń)
             </a>
           </li>
         </ul>
       </nav>
 
       <div className="mt-10 flex flex-col gap-12">
-        <Section id="klucze" title="1. Twoje klucze API">
+        <Section id="auth" title="1. Uwierzytelnianie">
           <p>
-            API używa <strong>kluczy API per użytkownik</strong>. Wygeneruj klucz poniżej
-            (musisz być zalogowana). Pełny klucz pokazujemy <strong>tylko raz</strong> —
-            zapisz go bezpiecznie. Klucz działa w Twoim imieniu, więc traktuj go jak hasło;
-            w razie wycieku odwołaj go i wygeneruj nowy.
-          </p>
-          <ApiKeysManager />
-        </Section>
-
-        <Section id="auth" title="2. Uwierzytelnianie">
-          <p>
-            Klucz przekazujesz w nagłówku <Pill>Authorization: Bearer …</Pill> (albo
-            alternatywnie <Pill>X-API-Key: …</Pill>):
+            API używa <strong>kluczy API per użytkownik</strong>. Wygeneruj klucz w panelu
+            „Klucze API&quot; u góry strony (musisz być zalogowana). Klucz przekazujesz w
+            nagłówku <Pill>Authorization: Bearer …</Pill> (albo alternatywnie{" "}
+            <Pill>X-API-Key: …</Pill>):
           </p>
           <Code>{`Authorization: Bearer pauza_sk_twoj_klucz`}</Code>
         </Section>
 
-        <Section id="bazowy-adres" title="3. Adres bazowy, błędy i limity">
+        <Section id="bazowy-adres" title="2. Adres bazowy, błędy i limity">
           <p>
             Adresem bazowym jest origin Twojej instalacji Pauzy (w przykładach niżej:{" "}
             <code className="font-mono">https://twoja-pauza.example</code> — podmień na
@@ -167,7 +112,7 @@ export default function DocsPage() {
           </p>
         </Section>
 
-        <Section id="dodaj-wpis" title="4. POST /api/v1/entries — dodaj wpis">
+        <Section id="dodaj-wpis" title="3. POST /api/v1/entries — dodaj wpis">
           <p>
             Dodaje nowy wpis do dziennika. Domyślnie na dzisiejszy dzień. Wymagany jest
             tylko <code className="font-mono">text</code>; reszta jest opcjonalna.
@@ -228,7 +173,7 @@ export default function DocsPage() {
           </p>
         </Section>
 
-        <Section id="pobierz-wpisy" title="5. GET /api/v1/entries — wpisy z dnia">
+        <Section id="pobierz-wpisy" title="4. GET /api/v1/entries — wpisy z dnia">
           <p>
             Zwraca wszystkie wpisy z podanego dnia (dzień może mieć ich kilka). Datę
             podajesz w parametrze zapytania <code className="font-mono">date</code>;
@@ -259,7 +204,7 @@ export default function DocsPage() {
 }`}</Code>
         </Section>
 
-        <Section id="ekspert" title="6. POST /api/v1/expert — zapytaj Eksperta">
+        <Section id="ekspert" title="5. POST /api/v1/expert — zapytaj Eksperta">
           <p>
             Zadaje pytanie Ekspertowi (asystent w nurcie CBT). Domyślnie patrzy na całość
             dziennika. Jeśli podasz <code className="font-mono">date</code>, rozmowa
@@ -290,7 +235,7 @@ export default function DocsPage() {
           </p>
         </Section>
 
-        <Section id="slowniki" title="7. Słowniki">
+        <Section id="slowniki" title="6. Słowniki">
           <p>
             <strong>Nastrój</strong> (<code className="font-mono">mood</code>) — liczba 1–5:
           </p>
