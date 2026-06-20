@@ -76,9 +76,10 @@ export default function DocsApiPage() {
 
         <Section id="bazowy-adres" title="2. Adres bazowy, błędy i limity">
           <p>
-            Adresem bazowym jest origin Twojej instalacji Pauzy (w przykładach niżej:{" "}
-            <code className="font-mono">https://twoja-pauza.example</code> — podmień na
-            swój). Wszystkie żądania i odpowiedzi używają <strong>JSON</strong> (
+            Adresem bazowym jest{" "}
+            <code className="font-mono">https://pauza-journal.vercel.app</code> (używany
+            w przykładach niżej). Wszystkie żądania i odpowiedzi używają{" "}
+            <strong>JSON</strong> (
             <code className="font-mono">Content-Type: application/json</code>).
           </p>
           <p>Błędy mają jednolity kształt:</p>
@@ -142,7 +143,7 @@ export default function DocsApiPage() {
             </li>
           </ul>
           <p>Przykład (curl):</p>
-          <Code>{`curl -X POST https://twoja-pauza.example/api/v1/entries \\
+          <Code>{`curl -X POST https://pauza-journal.vercel.app/api/v1/entries \\
   -H "Authorization: Bearer pauza_sk_twoj_klucz" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -180,7 +181,7 @@ export default function DocsApiPage() {
             domyślnie dziś.
           </p>
           <p>Przykład (curl):</p>
-          <Code>{`curl https://twoja-pauza.example/api/v1/entries?date=2026-06-07 \\
+          <Code>{`curl https://pauza-journal.vercel.app/api/v1/entries?date=2026-06-07 \\
   -H "Authorization: Bearer pauza_sk_twoj_klucz"`}</Code>
           <p>Odpowiedź (200):</p>
           <Code>{`{
@@ -224,7 +225,7 @@ export default function DocsApiPage() {
             </li>
           </ul>
           <p>Przykład (curl):</p>
-          <Code>{`curl -X POST https://twoja-pauza.example/api/v1/expert \\
+          <Code>{`curl -X POST https://pauza-journal.vercel.app/api/v1/expert \\
   -H "Authorization: Bearer pauza_sk_twoj_klucz" \\
   -H "Content-Type: application/json" \\
   -d '{ "message": "Jaki schemat widzisz w moich nastrojach?", "date": "2026-06-07" }'`}</Code>
