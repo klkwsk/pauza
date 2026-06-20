@@ -165,13 +165,22 @@ export default function HomePage() {
           ) : visibleEntries.length === 0 ? (
             <EmptyState />
           ) : (
-            <ul className="columns-3 gap-6 [&>li]:mb-6 [&>li]:break-inside-avoid">
-              {visibleEntries.map((entry) => (
-                <li key={entry.id}>
-                  <EntryCard entry={entry} />
-                </li>
+            // Masonry z kolejnością wierszami: wpisy idą naprzemiennie do 3
+            // kolumn (0→kol1, 1→kol2, 2→kol3, 3→kol1…), więc górny rząd czyta
+            // się lewo→prawo z najnowszymi, a kolumny pakują się bez przerw.
+            <div className="grid grid-cols-3 items-start gap-6">
+              {[0, 1, 2].map((col) => (
+                <ul key={col} className="flex flex-col gap-6">
+                  {visibleEntries
+                    .filter((_, i) => i % 3 === col)
+                    .map((entry) => (
+                      <li key={entry.id}>
+                        <EntryCard entry={entry} />
+                      </li>
+                    ))}
+                </ul>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       </div>

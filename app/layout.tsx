@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Literata, Geist, Geist_Mono, Archivo_Black } from "next/font/google";
+import { Literata, Geist, Geist_Mono, Archivo_Black, Chewy } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "@/components/app-shell";
@@ -26,6 +26,12 @@ const archivoBlack = Archivo_Black({
   weight: "400",
 });
 
+const chewy = Chewy({
+  variable: "--font-chewy",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "Pauza — dziennik",
   description: "Prosty dziennik codziennych myśli i nastroju.",
@@ -39,7 +45,7 @@ export default function RootLayout({
   return (
     <html
       lang="pl"
-      className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} ${archivoBlack.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} ${archivoBlack.variable} ${chewy.variable} h-full antialiased`}
     >
       <body className="min-h-dvh bg-background">
         <AppShell>{children}</AppShell>

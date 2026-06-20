@@ -45,7 +45,8 @@ export function SidebarNav() {
       {/* Logo / nazwa aplikacji */}
       <Link
         href="/"
-        className="px-3 font-heading text-3xl font-medium leading-none tracking-tight uppercase outline-none focus-visible:underline"
+        className="px-3 font-medium leading-none tracking-tight uppercase outline-none focus-visible:underline"
+        style={{ fontFamily: "var(--font-chewy)", fontSize: "65px" }}
       >
         Pauza
       </Link>
