@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ChatMarkdown } from "@/components/chat-markdown";
 import { SendIcon, SparkleIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
@@ -138,7 +139,11 @@ function ChatBubble({ message }: { message: ChatMessage }) {
           message.pending && "text-muted-foreground italic",
         )}
       >
-        {message.text}
+        {isUser || message.pending ? (
+          message.text
+        ) : (
+          <ChatMarkdown text={message.text} />
+        )}
       </div>
     </div>
   );
