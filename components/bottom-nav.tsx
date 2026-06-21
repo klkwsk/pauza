@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
+
+import { ChatIcon } from "@/components/icons";
+import { useChat } from "@/components/chat-context";
 
 // Ikony z Heroicons (outline) — wstawione inline, bo projekt nie ma @heroicons/react
 function BookOpenIcon({ className }: { className?: string }) {
@@ -47,6 +50,7 @@ function ChartBarIcon({ className }: { className?: string }) {
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { openChat } = useChat();
 
   // Ukryj pasek w formularzu wpisu (nowy wpis oraz edycja) i na ekranie logowania
   if (pathname === "/new" || pathname.endsWith("/edit") || pathname === "/login")
@@ -55,24 +59,36 @@ export function BottomNav() {
   const isHome = pathname === "/";
   const isStats = pathname.startsWith("/stats");
 
+  const itemClasses = (active: boolean) =>
+    `flex h-10 w-10 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+      active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+    }`;
+
   return (
     <nav
       aria-label="Nawigacja główna"
       className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full bg-card px-2 py-1 shadow-lg ring-1 ring-black/5 lg:hidden"
     >
+      {/* 1. Moje konto — placeholder avatara (bez akcji, jak na desktopie) */}
+      <button
+        type="button"
+        aria-label="Moje konto"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <User className="h-5 w-5" />
+      </button>
+
+      {/* 2. Moje wpisy */}
       <Link
         href="/"
         aria-label="Wpisy"
         aria-current={isHome ? "page" : undefined}
-        className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
-          isHome
-            ? "text-primary"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
+        className={itemClasses(isHome)}
       >
         <BookOpenIcon className="h-6 w-6" />
       </Link>
 
+      {/* 3. Dodaj wpis */}
       <Link
         href="/new"
         aria-label="Dodaj wpis"
@@ -81,18 +97,25 @@ export function BottomNav() {
         <Plus className="h-6 w-6" />
       </Link>
 
+      {/* 4. Statystyki */}
       <Link
         href="/stats"
         aria-label="Statystyki"
         aria-current={isStats ? "page" : undefined}
-        className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
-          isStats
-            ? "text-primary"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
+        className={itemClasses(isStats)}
       >
         <ChartBarIcon className="h-6 w-6" />
       </Link>
+
+      {/* 5. Czat z ekspertem */}
+      <button
+        type="button"
+        onClick={openChat}
+        aria-label="Porozmawiaj z Ekspertem"
+        className={itemClasses(false)}
+      >
+        <ChatIcon className="h-6 w-6" />
+      </button>
     </nav>
   );
 }

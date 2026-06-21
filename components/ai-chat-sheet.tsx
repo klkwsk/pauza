@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ChatMarkdown } from "@/components/chat-markdown";
-import { SendIcon, SparkleIcon } from "@/components/icons";
+import { ChatIcon, SendIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 export type ChatRole = "user" | "agent";
@@ -21,6 +21,7 @@ export type ChatMessage = {
 };
 
 // Wysuwana od dołu warstwa z konwersacją (skorupa UI).
+// Tylko mobile/tablet (< lg) — na desktopie rolę przejmuje stały <DeskChatDock>.
 export function AiChatSheet({
   open,
   onOpenChange,
@@ -60,14 +61,18 @@ export function AiChatSheet({
       disablePointerDismissal
     >
       <DialogPrimitive.Portal>
+        {/* Warstwa pod czatem — efekt zamglonego szkła: biaława poświata + matowe rozmycie */}
+        <DialogPrimitive.Backdrop
+          className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 lg:hidden"
+        />
         <DialogPrimitive.Popup
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85svh] flex-col overflow-hidden rounded-t-[20px] bg-popover text-popover-foreground ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom sm:inset-x-auto sm:left-4 sm:bottom-6 sm:max-h-[75svh] sm:w-[min(22rem,calc(100vw-2rem))] sm:rounded-[20px] lg:left-4"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85svh] flex-col overflow-hidden rounded-t-[20px] bg-popover text-popover-foreground ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom sm:inset-x-auto sm:left-4 sm:bottom-6 sm:max-h-[75svh] sm:w-[min(22rem,calc(100vw-2rem))] sm:rounded-[20px] lg:hidden"
         >
           {/* Uchwyt + nagłówek */}
           <div className="flex flex-col items-center gap-3 px-5 pt-3 pb-2">
             <div className="h-1.5 w-10 rounded-full bg-muted-foreground/25" aria-hidden />
             <div className="flex w-full items-center gap-2">
-              <SparkleIcon className="size-5 shrink-0 text-primary" />
+              <ChatIcon className="size-5 shrink-0 text-primary" />
               <DialogPrimitive.Title className="font-heading text-base font-normal">
                 Rozmowa z Ekspertem
               </DialogPrimitive.Title>
@@ -126,7 +131,7 @@ export function AiChatSheet({
   );
 }
 
-function ChatBubble({ message }: { message: ChatMessage }) {
+export function ChatBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>

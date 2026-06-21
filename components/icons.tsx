@@ -97,6 +97,18 @@ export function SparkleIcon({ className }: { className?: string }) {
   );
 }
 
+// Rozmowa — dymek z ogonkiem i trzema kropkami, znak „porozmawiaj”
+export function ChatIcon({ className }: { className?: string }) {
+  return (
+    <IconBase className={className}>
+      <path d="M9 7.5 L23 7.5 C24.6 7.5 26 8.9 26 10.5 L26 18.5 C26 20.1 24.6 21.5 23 21.5 L15 21.5 L9.5 25.5 L10 21.5 L9 21.5 C7.4 21.5 6 20.1 6 18.5 L6 10.5 C6 8.9 7.4 7.5 9 7.5 Z" />
+      <path d="M11.6 14.5 L11.7 14.5" />
+      <path d="M15.9 14.5 L16 14.5" />
+      <path d="M20.2 14.5 L20.3 14.5" />
+    </IconBase>
+  );
+}
+
 // Wysyłka — strzałka skierowana w prawo, „odręczny” grocik
 export function SendIcon({ className }: { className?: string }) {
   return (

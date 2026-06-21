@@ -12,14 +12,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { SparkleIcon } from "@/components/icons";
-import { useChat } from "@/components/chat-context";
 import { createClient } from "@/lib/supabase/client";
 
 export function SidebarNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { openChat } = useChat();
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -62,7 +59,7 @@ export function SidebarNav() {
         Dodaj wpis
       </Button>
 
-      {/* Lista nawigacji */}
+      {/* Nawigacja po funkcjach aplikacji */}
       <nav className="mt-6 flex flex-col gap-1">
         <Link
           href="/"
@@ -81,47 +78,44 @@ export function SidebarNav() {
           <BarChart3 className="size-5" />
           Podsumowanie
         </Link>
-
-        {/* Dane Konta — placeholder (pusty link, bez akcji) */}
-        <button
-          type="button"
-          aria-disabled
-          className="flex cursor-default items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium text-muted-foreground/60 outline-none"
-        >
-          <User className="size-5" />
-          Dane Konta
-        </button>
-
-        <Link
-          href="/docs"
-          aria-current={pathname.startsWith("/docs") ? "page" : undefined}
-          className={linkClasses(pathname.startsWith("/docs"))}
-        >
-          <FileText className="size-5" />
-          Dokumentacja
-        </Link>
-
-        {/* Wyloguj się — na końcu listy, pod Dokumentacją */}
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="flex items-center gap-3 rounded-xl border-[1px] border-transparent px-3 py-2.5 text-base font-medium text-muted-foreground transition-colors outline-none hover:border-border hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <LogOut className="size-5" />
-          Wyloguj się
-        </button>
       </nav>
 
-      {/* Porozmawiaj — przypięte na dole (stała pozycja, by okno czatu nie skakało);
-          z ramką i pełnym zaokrągleniem; hover wypełnia na primary z białym tekstem */}
-      <button
-        type="button"
-        onClick={openChat}
-        className="mt-auto flex items-center gap-3 rounded-full border border-border px-4 py-2.5 text-base font-medium text-foreground transition-colors outline-none hover:bg-primary hover:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-      >
-        <SparkleIcon className="size-5 shrink-0" />
-        Porozmawiaj
-      </button>
+      {/* Sekcja dolna — przypięta do dołu (lewy dolny róg) */}
+      <div className="mt-auto flex flex-col gap-1">
+        {/* Elementy systemowe — oddzielone od nawigacji funkcjami */}
+        <nav
+          aria-label="Konto i ustawienia"
+          className="flex flex-col gap-1"
+        >
+          {/* Dane Konta — placeholder (pusty link, bez akcji) */}
+          <button
+            type="button"
+            aria-disabled
+            className="flex cursor-default items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium text-muted-foreground/60 outline-none"
+          >
+            <User className="size-5" />
+            Dane Konta
+          </button>
+
+          <Link
+            href="/docs"
+            aria-current={pathname.startsWith("/docs") ? "page" : undefined}
+            className={linkClasses(pathname.startsWith("/docs"))}
+          >
+            <FileText className="size-5" />
+            Dokumentacja
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex items-center gap-3 rounded-xl border-[1px] border-transparent px-3 py-2.5 text-base font-medium text-muted-foreground transition-colors outline-none hover:border-border hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <LogOut className="size-5" />
+            Wyloguj się
+          </button>
+        </nav>
+      </div>
     </aside>
   );
 }

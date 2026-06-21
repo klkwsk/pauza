@@ -17,7 +17,6 @@ import {
 import { EntryCard } from "@/components/entry-card";
 import { EntryFilter } from "@/components/entry-filter";
 import { WeekCalendar } from "@/components/week-calendar";
-import { AiChatButton } from "@/components/ai-chat-button";
 import { PencilIcon } from "@/components/icons";
 import { useChat } from "@/components/chat-context";
 import { useEntries } from "@/hooks/use-entries";
@@ -184,9 +183,6 @@ export default function HomePage() {
           )}
         </div>
       </div>
-
-      {/* Pływający przycisk czatu — tylko mobile; na desktopie jest w pasku bocznym */}
-      <AiChatButton />
     </div>
   );
 }

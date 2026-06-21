@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname === "/login";
 
   return (
-    <ChatProvider>
+    <ChatProvider showDock={!hideChrome}>
       {!hideChrome && <SidebarNav />}
       {/* Na desktopie odsuwamy treść od stałego paska bocznego */}
       <div className={hideChrome ? undefined : "lg:pl-64"}>{children}</div>
