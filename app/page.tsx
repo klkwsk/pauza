@@ -76,7 +76,7 @@ export default function HomePage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-8 pb-40 sm:pt-12 lg:max-w-6xl lg:pb-28">
       <header className="flex items-start justify-between gap-3">
-        <h1 className="font-heading text-[50px] font-medium leading-none tracking-tight uppercase">
+        <h1 className="font-heading text-[50px] font-medium leading-none tracking-tight uppercase lg:hidden">
           {profileLoading ? "Cześć" : `Cześć ${name}`}
         </h1>
         {/* Hamburger tylko na mobile — na desktopie nawigację przejmuje pasek boczny */}
